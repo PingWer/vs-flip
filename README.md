@@ -4,16 +4,12 @@
 
 This wrapper integrates the `flip` Python library and works entirely within VapourSynth pipelines.
 
----
-
 ## 📦 Features
 
 - Frame-by-frame FLIP comparison between two `VideoNode`.
 - Outputs GrayscaleS error maps where darker pixels indicate better perceptual similarity.
 - Supports both `LDR` and `HDR` evaluation modes ().
 - Optionally exports error maps as images (`.png`).
-
----
 
 ## 🛠 Requirements
 
@@ -22,8 +18,6 @@ This wrapper integrates the `flip` Python library and works entirely within Vapo
 - [NumPy](https://numpy.org/)
 - [Matplotlib](https://matplotlib.org/)
 - [flip](https://github.com/NVlabs/flip)
-
----
 
 ## 🚀 Installation
 

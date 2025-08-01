@@ -1,0 +1,24 @@
+[project]
+name = "vsflip"
+version = "1.0.0"
+description = "A VapourSynth wrapper for the FLIP perceptual metric"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    { name = "PingWer", email = "r74michele@gmail.com" }
+]
+requires-python = ">=3.13"
+
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "flip_evaluator",
+    "vapoursynth"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["vsflip"]

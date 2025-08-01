@@ -1,1 +1,5 @@
 test.vpy
+.vsjet
+__pycache__
+.venv
+vsflip.egg-info
