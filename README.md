@@ -9,7 +9,7 @@ This wrapper integrates the `flip` Python library and works entirely within Vapo
 - Frame-by-frame FLIP comparison between two `VideoNode`.
 - Outputs GrayscaleS error maps where darker pixels indicate better perceptual similarity.
 - Supports both `LDR` and `HDR` evaluation modes.
-- Optionally exports error maps as images (`.png`). Only 
+- Optionally exports error maps as images (`.png`).
 
 ## 🛠 Requirements
 
