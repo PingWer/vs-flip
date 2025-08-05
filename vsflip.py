@@ -10,9 +10,16 @@ from weakref import WeakValueDictionary
 
 core = vs.core
 
+#What this value means:
+#First float is the distance to display (meters), second is display width (pixels), and third is display width (meters).
+#Tonemapper allowed options are "ACES", "Hable", and "Reinhard"
+#Exposure values should be left as None, let FLIP calculate them. This doesn't apply if you're doing an HDR comparison."
+
+#TODO:
+#Fixing Exposure value parsing
 FLIPDICT = {
         "vc": [0.5, 3840, 0.6],
-        "tonemapper": "ACES"
+        "tonemapper": "ACES",
     }
 
 _f2c_cache = WeakValueDictionary[int, vs.VideoNode]()

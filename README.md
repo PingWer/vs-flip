@@ -1,6 +1,6 @@
 # vsflip
 
-**vsflip** is a Python wrapper for **VapourSynt** that enables perceptual video comparison using the [FLIP metric](https://github.com/NVlabs/flip) (Fidelity Loss Image Processing). It computes frame-by-frame error maps that quantify visual differences between a reference and a test video.
+**vsflip** is a Python wrapper for **VapourSynt** that enables perceptual video comparison using the [FLIP metric](https://github.com/NVlabs/flip). It computes frame-by-frame error maps that quantify visual differences between a reference and a test video.
 
 This wrapper integrates the `flip` Python library and works entirely within VapourSynth pipelines.
 
@@ -8,8 +8,8 @@ This wrapper integrates the `flip` Python library and works entirely within Vapo
 
 - Frame-by-frame FLIP comparison between two `VideoNode`.
 - Outputs GrayscaleS error maps where darker pixels indicate better perceptual similarity.
-- Supports both `LDR` and `HDR` evaluation modes ().
-- Optionally exports error maps as images (`.png`).
+- Supports both `LDR` and `HDR` evaluation modes.
+- Optionally exports error maps as images (`.png`). Only 
 
 ## 🛠 Requirements
 
@@ -37,7 +37,7 @@ result = vsflip_frame(ref_clip, test_clip)
 # Compare all frames (must be aligned and same length)
 result = vsflip_video(ref_clip, test_clip)
 ```
-- Both functions return a VideoNode in grayscale (GRAYS format)
+- Both functions return a VideoNode (GRAYS format).
 
 - Refer to the Python docstrings for detailed parameter descriptions and options.
 
@@ -49,6 +49,12 @@ This project uses the [FLIP metric](https://github.com/NVlabs/flip) python wrapp
 
 The flip library's source code or binaries are **not bundled** with this project.
 It is installed separately as a required runtime dependency.
+
+## TODO List
+Hoping that Nvidia hasn't dropped the project, I want to create the Python wrapper and the Vaporsynth implementation for the CUDA version as well. 
+I actually tried, but I miserably failed... 
+
+Any help is appreciated.
 
 ## 📬 Contact
 For questions, bugs, or feature requests, feel free to open an issue or pull request.

@@ -3,3 +3,4 @@ test.vpy
 __pycache__
 .venv
 vsflip.egg-info
+build
