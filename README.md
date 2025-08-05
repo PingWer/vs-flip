@@ -51,10 +51,9 @@ The flip library's source code or binaries are **not bundled** with this project
 It is installed separately as a required runtime dependency.
 
 ## TODO List
-Hoping that Nvidia hasn't dropped the project, I want to create the Python wrapper and the Vaporsynth implementation for the CUDA version as well. 
-I actually tried, but I miserably failed... 
-
-Any help is appreciated.
+- Hoping that Nvidia hasn't dropped the project, I want to create the Python  wrapper and the Vaporsynth implementation for the CUDA version as well. 
+  I actually tried, but I miserably failed... Any help is appreciated.
+- Fixing Exposure value parsing
 
 ## 📬 Contact
 For questions, bugs, or feature requests, feel free to open an issue or pull request.
