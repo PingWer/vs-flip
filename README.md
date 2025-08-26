@@ -1,6 +1,6 @@
 # vsflip
 
-**vsflip** is a Python wrapper for **VapourSynt** that enables perceptual video comparison using the [FLIP metric](https://github.com/NVlabs/flip). It computes frame-by-frame error maps that quantify visual differences between a reference and a test video.
+**vsflip** is a Python wrapper for **VapourSynth** that enables perceptual video comparison using the [FLIP metric](https://github.com/NVlabs/flip). It computes frame-by-frame error maps that quantify visual differences between a reference and a test video.
 
 This wrapper integrates the `flip` Python library and works entirely within VapourSynth pipelines.
 
