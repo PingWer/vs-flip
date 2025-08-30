@@ -10,17 +10,38 @@ from weakref import WeakValueDictionary
 
 core = vs.core
 
+__all__ = ["FlipParams", "vsflip_frame", "vsflip_video"]
+
 #What this value means:
 #First float is the distance to display (meters), second is display width (pixels), and third is display width (meters).
 #Tonemapper allowed options are "ACES", "Hable", and "Reinhard"
-#Exposure values should be left as None, let FLIP calculate them. This doesn't apply if you're doing an HDR comparison."
+#Exposure values should be left as None, let FLIP calculate them. This doesn't apply if you're doing an HDR comparison, in that case you should pass your own dict.
 
-#TODO:
-#Fixing Exposure value parsing
-FLIPDICT = {
-        "vc": [0.5, 3840, 0.6],
-        "tonemapper": "ACES",
-    }
+class _ParamConfig:
+    def __init__(self, category, name, params_dict):
+        self.category = category
+        self.name = name
+        self.para_dict = params_dict
+
+    def getname(self):
+        return f"{self.category} {self.name}"
+    
+class FlipParams:
+    #50cm distance:
+    class Monitor:
+        fhd        = _ParamConfig("monitor", "fhd27", {"vc": [0.5, 1920, 0.598], "tonemapper": "ACES"}) # FHD 27"
+        mainstream = _ParamConfig("monitor", "mainstream", {"vc": [0.5, 2560, 0.598], "tonemapper": "ACES"}) # Mainstream (QHD 27")
+        reference  = _ParamConfig("monitor", "reference", {"vc": [0.5, 3840, 0.686], "tonemapper": "ACES"}) # Reference (4K 31")
+        retina     = _ParamConfig("monitor", "retina", {"vc": [0.5, 5120, 0.598], "tonemapper": "ACES"}) # Retina (5K 27")
+    # 17cm distance, limited to 16:9 aspect ratio
+    class Mobile:
+        budget     = _ParamConfig("mobile", "budget", {"vc": [0.17, 1920, 0.148], "tonemapper": "ACES"}) # Budget (FHD 6.67")
+        reference  = _ParamConfig("mobile", "reference", {"vc": [0.17, 2560, 0.153], "tonemapper": "ACES"}) # Reference (QHD 6.9")
+        retina     = _ParamConfig("mobile", "retina", {"vc": [0.17, 2293, 0.153], "tonemapper": "ACES"}) # Retina (17 promax 6.9")
+
+    class TV:
+        reference = _ParamConfig("tv", "reference", {"vc": [2.5, 3840, 1.439], "tonemapper": "ACES"}) # Reference (4K 65")
+        retina    = _ParamConfig("tv", "retina", {"vc": [1.31, 3840, 1.439], "tonemapper": "ACES"}) # Retina (4K 65")
 
 _f2c_cache = WeakValueDictionary[int, vs.VideoNode]()
 
@@ -87,7 +108,7 @@ def vsflip_frame (
         range:str="LDR",
         ref_frame: int = 0,
         test_frame: int = 0,
-        parameters: dict = FLIPDICT,
+        params: _ParamConfig = FlipParams.Monitor.reference,
         save_flip_error_mask: bool = False,
         debug: bool = False,
         blank: vs.VideoNode = None
@@ -100,7 +121,7 @@ def vsflip_frame (
     :param range:                   The range of the video, either "LDR" or "HDR".
     :param ref_frame:               The frame number of the reference clip to compare. Default is 0.
     :param test_frame:              The frame number of the test clip to compare. Default is 0.
-    :param parameters:              A dictionary of parameters for the FLIP evaluation. Default is {"vc": [0.5, 3840, 0.6], "tonemapper": "ACES"}).
+    :param params:                  A dictionary of parameters for the FLIP evaluation. Default is FlipParams.Monitor.reference.
     :param save_flip_error_mask:    If True, saves the FLIP error mask as png in the script folder. Default is False.
     :param debug:                   If True, prints debug information. Default is False.
     :param blank:                   Only for devoloper use.
@@ -127,13 +148,13 @@ def vsflip_frame (
         np_ref = frame_to_numpyArray(frame_ref)
         np_test = frame_to_numpyArray(frame_test)
 
-        flipErrorMap, meanFLIPError, parameters = flip.evaluate(np_ref, np_test, range, applyMagma=False, parameters=parameters)
+        flipErrorMap, meanFLIPError, parameters = flip.evaluate(np_ref, np_test, range, applyMagma=False, parameters=params.para_dict)
         flipErrorMap = np.squeeze(flipErrorMap)
 
         if debug:
             print("Mean FLIP error: ", round(meanFLIPError, 6), "\n")
 
-            print("The following parameters were used:")
+            print(f"The following parameters were used \"{params.getname().upper()}\":")
             for key in parameters:
                 val = parameters[key]
                 if isinstance(val, float):
@@ -163,7 +184,7 @@ def vsflip_video(
         ref_clip: vs.VideoNode,
         test_clip: vs.VideoNode,
         range: str = "LDR",
-        parameters: dict = FLIPDICT,
+        params: _ParamConfig = FlipParams.Monitor.reference,
         debug: bool = False,
         allignment_to_ref: int = 0
 ) -> vs.VideoNode:
@@ -181,7 +202,6 @@ def vsflip_video(
     :return:                        A VapourSynth VideoNode containing the FLIP error map for each frame in GrayScaleS.
     """
     
-    # just in case the user is tard
     min_length = min(ref_clip.num_frames, test_clip.num_frames - allignment_to_ref)
 
     blank = core.std.BlankClip(
@@ -208,7 +228,7 @@ def vsflip_video(
                 range=range,
                 ref_frame=n,
                 test_frame=n+allignment_to_ref,
-                parameters=parameters,
+                params=params,
                 save_flip_error_mask=False,
                 debug=debug,
                 blank=blank1
@@ -217,5 +237,4 @@ def vsflip_video(
             print(f"Error processing frame {n}: {e}")
             return blank1 # Return a blank frame in case of error
 
-    return core.std.FrameEval(clip=blank, eval=select_flip)
-
+    return core.std.FrameEval(clip=blank, clip_src=[ref_clip,test_clip], eval=select_flip)

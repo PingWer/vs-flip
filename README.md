@@ -41,6 +41,9 @@ result = vsflip_video(ref_clip, test_clip)
 
 - Refer to the Python docstrings for detailed parameter descriptions and options.
 
+## Parameter Presets
+To help understand the various screen resolution, distance, etc., I have created a set of presets called `FlipParams`. Check the docstring and the function itself for more info.
+
 ## License
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
@@ -53,7 +56,6 @@ It is installed separately as a required runtime dependency.
 ## TODO List
 - Hoping that Nvidia hasn't dropped the project, I want to create the Python  wrapper and the Vaporsynth implementation for the CUDA version as well. 
   I actually tried, but I miserably failed... Any help is appreciated.
-- Fixing Exposure value parsing
 
 ## 📬 Contact
 For questions, bugs, or feature requests, feel free to open an issue or pull request.

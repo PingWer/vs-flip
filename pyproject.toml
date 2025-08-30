@@ -1,6 +1,6 @@
 [project]
 name = "vsflip"
-version = "1.0.2"
+version = "1.1.0"
 description = "A VapourSynth wrapper for the FLIP perceptual metric"
 readme = "README.md"
 license = {file = "LICENSE"}
