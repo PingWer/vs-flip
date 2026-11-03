@@ -15,6 +15,9 @@
 
 ## Performance & Benchmarks
 
+> [!NOTE]
+> All benchmarks and throughput tests were performed on an **Ryzen 7 7700X** and an **RTX 3060 (12GB)**.
+
 Benchmarked on 1080p (1920x1080) video:
 
 | Mode / Backend | Precision | Real Video (`BestSource`) | Synthetic Raw Frames | Speedup vs CPU |
