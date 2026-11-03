@@ -9,3 +9,4 @@ dist
 *.so
 *.pyd
 /typings
+/tests

@@ -22,6 +22,7 @@ else()
 endif()
 
 find_package(OpenMP COMPONENTS CXX REQUIRED)
+find_package(Vulkan QUIET)
 
 set(SOURCES
     src/vsflip_plugin.cpp
@@ -33,12 +34,23 @@ if(VSFLIP_HAS_CUDA)
     add_compile_definitions(VSFLIP_CUDA_SUPPORT)
 endif()
 
+if(Vulkan_FOUND)
+    add_compile_definitions(VSFLIP_HAS_VULKAN)
+    message(STATUS "Vulkan found. Vulkan-CUDA interop enabled: ${Vulkan_INCLUDE_DIRS}")
+endif()
+
+add_compile_definitions(VS_USE_LATEST_API)
+
 add_library(vsflip SHARED ${SOURCES})
 
 target_include_directories(vsflip PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
+
+if(Vulkan_FOUND)
+    target_include_directories(vsflip PRIVATE ${Vulkan_INCLUDE_DIRS})
+endif()
 
 target_link_libraries(vsflip PRIVATE OpenMP::OpenMP_CXX)
 

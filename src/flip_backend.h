@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 enum class FlipDevice {
@@ -10,20 +11,35 @@ enum class FlipDevice {
 
 struct FlipEvaluationParams {
     int dynamic_range;          // 0 = LDR, 1 = HDR
-    float ppd;                  // Pixels per degree (> 0)
-    float vc[3];                // Viewing conditions [distance_m, width_px, width_m]
-    bool use_vc;                // Whether to use vc instead of ppd
-    std::string tonemapper;     // "aces", "hable", "reinhard"
-    float start_exposure;       // HDR start exposure (infinity for auto)
-    float stop_exposure;        // HDR stop exposure (infinity for auto)
-    int num_exposures;          // HDR number of exposures (-1 for auto)
-    bool apply_magma;           // false = grayscale (1 plane), true = magma heatmap (3 planes)
-    bool input_srgb;            // true if inputs are sRGB (converted to linear RGB internally)
+    float ppd;                  // pixels per degree
+    float vc[3];                // dist_m, w_px, w_m
+    bool use_vc;
+    std::string tonemapper;
+    float start_exposure;
+    float stop_exposure;
+    int num_exposures;
+    bool apply_magma;           // false = 1 gray plane, true = 3 magma planes
+    bool fast;                  // FP16 fast mode (default true in 2.1)
+    bool gpu_output;            // true = write direct to GPU plane, false = write to host RAM
 };
 
-// Evaluates FLIP using CPU (OpenMP).
-// ref_interleaved and test_interleaved are H x W x 3 float buffers.
-// output_data must be preallocated: H x W for grayscale, or H x W x 3 for magma.
+struct VulkanPlaneDesc {
+    uint64_t memoryId = 0;
+    uint64_t memorySize = 0;
+    uint64_t offset = 0;
+    uint64_t size = 0;
+    int handleType = 0;
+    intptr_t handle = 0;
+    int stride_bytes = 0;
+
+    // device-side timeline semaphore sync
+    uint64_t vkSemaphore = 0;
+    uint64_t readyValue = 0;
+    int semHandleType = 0;
+    intptr_t semHandle = 0;
+};
+
+// cpu openmp path
 bool flip_evaluate_cpu(
     const float* ref_interleaved,
     const float* test_interleaved,
@@ -34,7 +50,7 @@ bool flip_evaluate_cpu(
     double& mean_error
 );
 
-// Evaluates FLIP using CUDA on specified device_id.
+// cuda path from host ram (interleaved)
 bool flip_evaluate_cuda(
     const float* ref_interleaved,
     const float* test_interleaved,
@@ -46,9 +62,53 @@ bool flip_evaluate_cuda(
     double& mean_error
 );
 
-// Returns true if CUDA is compiled and at least one CUDA-capable device is detected.
+// cuda path from host ram
+bool flip_evaluate_cuda_planar(
+    const uint8_t* const ref_ptrs[3],
+    const ptrdiff_t ref_strides[3],
+    const uint8_t* const test_ptrs[3],
+    const ptrdiff_t test_strides[3],
+    int width,
+    int height,
+    const FlipEvaluationParams& params,
+    int device_id,
+    uint8_t* const out_ptrs[3],
+    const ptrdiff_t out_strides[3],
+    double& mean_error
+);
+
+// zero-copy: reads direct from vulkan vram, writes out to host ram
+bool flip_evaluate_cuda_vulkan(
+    const VulkanPlaneDesc ref_planes[3],
+    const VulkanPlaneDesc test_planes[3],
+    int width,
+    int height,
+    const FlipEvaluationParams& params,
+    int device_id,
+    uint8_t* const out_ptrs[3],
+    const ptrdiff_t out_strides[3],
+    double& mean_error
+);
+
+// unified flexible cuda input/output
+bool flip_evaluate_cuda_flexible(
+    const VulkanPlaneDesc* ref_vulkan,
+    const uint8_t* const ref_host_ptrs[3],
+    const ptrdiff_t ref_host_strides[3],
+    const VulkanPlaneDesc* test_vulkan,
+    const uint8_t* const test_host_ptrs[3],
+    const ptrdiff_t test_host_strides[3],
+    int width,
+    int height,
+    const FlipEvaluationParams& params,
+    int device_id,
+    uint8_t* const out_ptrs[3],
+    const ptrdiff_t out_strides[3],
+    double& mean_error
+);
+
+void* flip_cuda_import_vulkan_plane(const VulkanPlaneDesc& desc);
+
+void flip_cuda_cleanup_memory_cache();
 bool flip_cuda_is_available();
-
-// Returns number of CUDA devices.
 int flip_cuda_device_count();
-

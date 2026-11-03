@@ -14,7 +14,8 @@ if not hasattr(core, "vsflip"):
             core.std.LoadPlugin(_lib_path)
             break
 
-__all__ = ["FlipParams", "vsflip_frame", "vsflip_video"]
+__version__ = "2.1.0"
+__all__ = ["__version__", "FlipParams", "vsflip_frame", "vsflip_video"]
 
 
 class _ParamConfig:
@@ -61,17 +62,19 @@ def vsflip_video(
     cuda_device: int = 0,
     magma: bool = False,
     alignment_to_ref: int = 0,
-    input_srgb: bool = True,
+    fast: bool = True,
+    gpu_output: bool = False,
     **kwargs: Any
 ) -> vs.VideoNode:
     """
     Compare two videos frame-by-frame using the native C++/CUDA FLIP metric.
 
-    Both clips must be in vs.RGBS format (32-bit float planar RGB).
-    FLIP operates on linear scene radiance, so inputs should be in linear light, regardless of color space.
+    Both clips must be in vs.RGBS format (32-bit float planar RGB in linear light).
+    Input frames are automatically detected and read directly from GPU (VRAM zero-copy)
+    if resident on GPU, or copied from CPU host memory.
 
-    :param ref_clip:          Reference VapourSynth VideoNode (must be vs.RGBS).
-    :param test_clip:         Test VapourSynth VideoNode (must be vs.RGBS).
+    :param ref_clip:          Reference VapourSynth VideoNode (must be vs.RGBS linear).
+    :param test_clip:         Test VapourSynth VideoNode (must be vs.RGBS linear).
     :param dynamic_range:     Dynamic range mode: 'LDR' or 'HDR'.
     :param params:            Preset configuration (_ParamConfig) or dictionary of settings.
     :param device:            Computation device: 'cuda', 'cpu', or 'auto' (default: 'auto').
@@ -79,15 +82,19 @@ def vsflip_video(
     :param magma:             If True, outputs error map as a 3-channel RGB Magma heatmap (RGBS).
                               If False, outputs a 1-channel Grayscale error map (GRAYS).
     :param alignment_to_ref:  Frame offset to align test clip with reference clip.
-    :param input_srgb:        If True, linearizes LDR inputs from sRGB. Set to False if clips
-                              are already in linear light (transfer='linear' or WCG/BT.2020 SDR).
-                              Ignored when dynamic_range='HDR'.
+    :param fast:              If True (default in v2.1), uses FP16 half-precision on CUDA for maximum speed.
+    :param gpu_output:        If True, returns a GPU-resident clip (nrGPU via Vulkan).
+                              If False (default), returns a standard CPU-resident clip for backward compatibility.
     :return:                  VideoNode with FLIP error map and 'meanFLIPError' frame property.
     """
     if "range" in kwargs:
         dynamic_range = kwargs["range"]
     if "allignment_to_ref" in kwargs:
         alignment_to_ref = kwargs["allignment_to_ref"]
+    if "superfast" in kwargs:
+        fast = fast or bool(kwargs["superfast"])
+    if "gpu_output" in kwargs:
+        gpu_output = bool(kwargs["gpu_output"])
 
     if dynamic_range.upper() not in ("LDR", "HDR"):
         raise ValueError(f"dynamic_range must be 'LDR' or 'HDR', got '{dynamic_range}'.")
@@ -136,7 +143,6 @@ def vsflip_video(
         "device": dev_code,
         "cuda_device": cuda_device,
         "magma": 1 if magma else 0,
-        "input_srgb": 1 if input_srgb else 0,
         "tonemapper": tonemapper,
     }
 
@@ -151,6 +157,9 @@ def vsflip_video(
         eval_kwargs["stop_exposure"] = float(stop_exp)
     if num_exp is not None:
         eval_kwargs["num_exposures"] = int(num_exp)
+
+    eval_kwargs["fast"] = 1 if fast else 0
+    eval_kwargs["gpu_output"] = 1 if gpu_output else 0
 
     node = core.vsflip.Evaluate(**eval_kwargs)
     if not magma:
@@ -168,17 +177,19 @@ def vsflip_frame(
     device: str = "auto",
     cuda_device: int = 0,
     magma: bool = False,
-    input_srgb: bool = True,
+    fast: bool = True,
+    gpu_output: bool = False,
     **kwargs: Any
 ) -> vs.VideoNode:
     """
     Compare two single frames using the native C++/CUDA FLIP metric.
 
-    Both clips must be in vs.RGBS format (32-bit float planar RGB).
-    FLIP operates on linear scene radiance, so inputs should be in linear light, regardless of color space.
+    Both clips must be in vs.RGBS format (32-bit float planar RGB in linear light).
+    Input frames are automatically detected and read directly from GPU (VRAM zero-copy)
+    if resident on GPU, or copied from CPU host memory.
 
-    :param ref_clip:       Reference VapourSynth VideoNode (must be vs.RGBS).
-    :param test_clip:      Test VapourSynth VideoNode (must be vs.RGBS).
+    :param ref_clip:       Reference VapourSynth VideoNode (must be vs.RGBS linear).
+    :param test_clip:      Test VapourSynth VideoNode (must be vs.RGBS linear).
     :param dynamic_range:  Dynamic range mode: 'LDR' or 'HDR'.
     :param ref_frame:      Frame index of the reference clip to compare.
     :param test_frame:     Frame index of the test clip to compare.
@@ -186,13 +197,17 @@ def vsflip_frame(
     :param device:         Computation device: 'cuda', 'cpu', or 'auto' (default: 'auto').
     :param cuda_device:    CUDA GPU device index (default: 0).
     :param magma:          If True, outputs error map as a 3-channel RGB Magma heatmap (RGBS).
-    :param input_srgb:     If True, linearizes LDR inputs from sRGB. Set to False if clips
-                           are already in linear light (transfer='linear' or WCG/BT.2020 SDR).
-                           Ignored when dynamic_range='HDR'.
+    :param fast:           If True (default in v2.1), uses FP16 half-precision on CUDA for maximum speed.
+    :param gpu_output:     If True, returns a GPU-resident clip (nrGPU via Vulkan).
+                           If False (default), returns a standard CPU-resident clip for backward compatibility.
     :return:               1-frame long VideoNode with FLIP error map and 'meanFLIPError' frame property.
     """
     if "range" in kwargs:
         dynamic_range = kwargs["range"]
+    if "superfast" in kwargs:
+        fast = fast or bool(kwargs["superfast"])
+    if "gpu_output" in kwargs:
+        gpu_output = bool(kwargs["gpu_output"])
 
     single_ref = ref_clip[ref_frame:ref_frame + 1]
     single_test = test_clip[test_frame:test_frame + 1]
@@ -205,6 +220,6 @@ def vsflip_frame(
         device=device,
         cuda_device=cuda_device,
         magma=magma,
-        input_srgb=input_srgb
+        fast=fast,
+        gpu_output=gpu_output,
     )
-

@@ -114,6 +114,11 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart-dev"]'
 
+      - name: Install Vulkan Development Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev
+
       - name: Verify CUDA installation
         run: |
           nvcc --version
