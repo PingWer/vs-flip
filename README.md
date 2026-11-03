@@ -129,7 +129,7 @@ vsflip.vsflip_video(
 
 | Category | Presets |
 | :--- | :--- |
-| **Monitor** (50 cm distance) | `FlipParams.Monitor.fhd` (27" 1080p), `mainstream` (27" 1440p), `reference` (31" 4K), `retina` (27" 5K) |
+| **Monitor** (50 cm distance) | `FlipParams.Monitor.hd` (21" 720p), `fhd` (27" 1080p), `mainstream` (27" 1440p), `reference` (31" 4K), `retina` (27" 5K) |
 | **Mobile** (17 cm distance) | `FlipParams.Mobile.budget` (6.67" 1080p), `reference` (6.9" 1440p), `retina` (6.9" Retina) |
 | **TV** (living room distance) | `FlipParams.TV.reference` (65" 4K at 2.5 m), `retina` (65" 4K at 1.31 m) |
 
